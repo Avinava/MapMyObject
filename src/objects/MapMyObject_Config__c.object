@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <customSettingsType>List</customSettingsType>
+    <customSettingsVisibility>Public</customSettingsVisibility>
+    <enableFeeds>false</enableFeeds>
+    <fields>
+        <fullName>Address_Field_API__c</fullName>
+        <deprecated>false</deprecated>
+        <externalId>false</externalId>
+        <inlineHelpText>API name of the field where the address retrieved from geolocation will be synced on update/create. Please leave it blank if you don&apos;t want to store the same</inlineHelpText>
+        <label>Address Field API</label>
+        <length>255</length>
+        <required>false</required>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>FieldSet_Name__c</fullName>
+        <deprecated>false</deprecated>
+        <externalId>false</externalId>
+        <inlineHelpText>Name of the fieldset that will render in the input menu while updating or creating records from the map</inlineHelpText>
+        <label>FieldSet Name</label>
+        <length>255</length>
+        <required>true</required>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Latitude_Field_API__c</fullName>
+        <deprecated>false</deprecated>
+        <externalId>false</externalId>
+        <inlineHelpText>API name of Geolocation fields &quot;Latitude&quot; Component. If the GeoLocation field Name is Shipping_Address__c, it will be &quot;Shipping_Address__latitude__s&quot;</inlineHelpText>
+        <label>Latitude Field API</label>
+        <length>255</length>
+        <required>true</required>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Longitude_Field_API__c</fullName>
+        <deprecated>false</deprecated>
+        <externalId>false</externalId>
+        <inlineHelpText>API name of Geolocation fields &quot;Longitude&quot; Component. If the GeoLocation field Name is Shipping_Address__c, it will be &quot;Shipping_Address__Longitude__s&quot;</inlineHelpText>
+        <label>Longitude Field API</label>
+        <length>255</length>
+        <required>true</required>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>SObject_API__c</fullName>
+        <deprecated>false</deprecated>
+        <externalId>false</externalId>
+        <inlineHelpText>API name of the SObject.</inlineHelpText>
+        <label>SObject API</label>
+        <length>255</length>
+        <required>true</required>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>isCreate_Allowed__c</fullName>
+        <defaultValue>true</defaultValue>
+        <deprecated>false</deprecated>
+        <externalId>false</externalId>
+        <inlineHelpText>If checked new records can be created by clicking on any point on the map.</inlineHelpText>
+        <label>isCreate Allowed</label>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>isUpdate_Allowed__c</fullName>
+        <defaultValue>false</defaultValue>
+        <deprecated>false</deprecated>
+        <externalId>false</externalId>
+        <inlineHelpText>If checked, user can update records by clicking on the corresponding marker on map.</inlineHelpText>
+        <label>isUpdate Allowed</label>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>isView_Allowed__c</fullName>
+        <defaultValue>true</defaultValue>
+        <deprecated>false</deprecated>
+        <externalId>false</externalId>
+        <inlineHelpText>If checked, user can view all the records that has geolocation data.</inlineHelpText>
+        <label>isView Allowed</label>
+        <type>Checkbox</type>
+    </fields>
+    <label>MapMyObject Config</label>
+</CustomObject>

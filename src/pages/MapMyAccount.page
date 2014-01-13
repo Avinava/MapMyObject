@@ -1,0 +1,4 @@
+<apex:page sidebar="false">
+    <!--This is included in the initial package -->
+    <c:MapMyObject ConfigName="Account"/>
+</apex:page>

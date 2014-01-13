@@ -1,0 +1,269 @@
+<apex:component controller="MapMyObject_Con" allowDML="true" selfClosing="true" access="global">
+    
+    
+    <apex:attribute type="String" name="ConfigName" assignTo="{!configurationName}" description="MapMyObject configuration name from customsettings" access="global"/>
+   
+    <!-- Import Necessary  js File and StyleSheets-->
+    <apex:includeScript value="https://maps.googleapis.com/maps/api/js?sensor=false"/>
+    <apex:includeScript value="{!URLFOR($Resource.MapMyObject_Resources, 'js/jquery-1.10.2.min.js')}" />
+    <apex:includeScript value="{!URLFOR($Resource.MapMyObject_Resources, 'js/bootstrap.min.js')}" />
+    <apex:stylesheet value="{!URLFOR($Resource.MapMyObject_Resources, 'css/Bootstraped3.css')}"/>
+    <style>
+        .modal-dialog {
+            margin-top:30%;
+        }
+        .modal-content {
+            margin-top:-50%;
+        }
+    </style>
+    <script>
+          var map,geocoder,infowindow;
+          var markers = [];
+          var markersOld = [];
+          $j = jQuery.noConflict();  
+          $j(document).ready(function(){
+              initialize();
+          });
+          
+         function initialize() {
+            infowindow = new google.maps.InfoWindow();
+            geocoder = new google.maps.Geocoder();
+            //initial cordinates for map init
+            var latlng = new google.maps.LatLng(37.09024, -95.712891);
+            var myOptions = {
+                zoom: 4,
+                center: latlng,
+                mapTypeId: google.maps.MapTypeId.ROADMAP
+            };
+            //load the map
+            map = new google.maps.Map($j('#map')[0], myOptions);
+            if({!config.isCreate_Allowed__c}){
+                google.maps.event.addListener(map,'click',function(event) {
+                   
+                    $j("#formattedAddressError").html('');
+                    $j(".bf9MapInputs").val('');
+                    $j('#createNewModal').modal({backdrop: 'static',keyboard : false});
+                    $j(".bf9MapInputs").prop("disabled",false);
+                    $j(".saveBtn").show();
+
+                    codeLatLng(event.latLng);
+                });
+            }
+            loadObjectData();
+         }
+       
+         
+         function codeLatLng(latlng,markerOld) {
+              $j("[id$='lat']").val(latlng.ob);
+              $j("[id$='lang']").val(latlng.pb);
+              geocoder.geocode({'latLng': latlng}, function(results, status) {
+                if (status == google.maps.GeocoderStatus.OK) {
+                  if (results[1]) {
+                    if(!markerOld){
+                        var pinColor = "2F76EE"; // a random blue color that i picked
+                        var pinImage = new google.maps.MarkerImage("http://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=%E2%80%A2|" + pinColor,
+                        new google.maps.Size(21, 34),
+                        new google.maps.Point(0,0),
+                        new google.maps.Point(10, 34));
+                        var pinShadow = new google.maps.MarkerImage("http://chart.apis.google.com/chart?chst=d_map_pin_shadow",
+                        new google.maps.Size(40, 37),
+                        new google.maps.Point(0, 0),
+                        new google.maps.Point(12, 35));
+                        marker = new google.maps.Marker({
+                            position: latlng,
+                            map: map,
+                            icon: pinImage,
+                            shadow: pinShadow
+                        });
+                        attachMarkerEvent(marker);
+                        infowindow.open(map, marker);
+                        markers.push(marker);
+                    }
+                    else{
+                        infowindow.open(map, markerOld);
+                    }
+                    infowindow.setContent(results[1].formatted_address);   
+                    
+                    $j("[id$='formattedAddress']").val(results[1].formatted_address);
+                    
+                  } else {
+                     $j("#formattedAddressError").html('No results found');
+                  }
+                } else {
+                  $j("#formattedAddressError").html('Geocoder failed due to: ' + status);
+                }
+              });
+        }
+        
+        function attachMarkerEvent(marker){
+            google.maps.event.addListener(marker, 'click', function(event) {
+                $j("#formattedAddressError").html('');
+                $j(".bf9MapInputs").val('');
+                $j('#createNewModal').modal({backdrop: 'static',keyboard : false});
+                codeLatLng(marker.getPosition(),marker);
+                for(var field in marker.data.sobj){ 
+                    $j(".new-"+field).val(marker.data.sobj[field]);
+                }
+                
+                if({!config.isUpdate_Allowed__c} == false){
+                    $j(".saveBtn").hide();
+                    $j(".bf9MapInputs").prop("disabled",true);
+                }
+            });
+        }
+            
+        function showNotification(notificationClass,notificationTitle,notificationMsg){
+            $j('#notificationHolder').empty();
+            var $clone = $j($j('#notification').clone());
+            $clone.appendTo('#notificationHolder');
+            $clone.find('#notificationHeader').addClass(notificationClass);
+            $clone.find('.modal-title').html(notificationTitle);
+            $clone.find('.modal-body').html(notificationMsg);
+            $clone.modal('show');
+            
+        }
+        
+        function loadObjectData(){
+            if({!config.isView_Allowed__c} && {!isConfigurationError} != true){
+                Visualforce.remoting.Manager.invokeAction(
+                        '{!$RemoteAction.MapMyObject_Con.getObjectData}', 
+                        '{!config.Name}', 
+                        function(result, event){
+                             if (event.status) {
+                                 console.log(result);
+                                 $j(result).each(function(){
+                                     addMarker(this);    
+                                    
+                                 });
+                                 
+                             }
+                             else{
+                                alert(event.message);
+                             } 
+                        }, 
+                        {escape: true}
+                    );
+            }
+        }
+        
+        function addMarker(wrapperData){
+            
+            
+            marker = new google.maps.Marker({
+                                    position: new google.maps.LatLng(wrapperData.lat, wrapperData.lang),
+                                    map: map
+                                    
+                                });
+            marker.data = wrapperData;
+            markersOld.push(marker);
+            attachMarkerEvent(marker);
+        }
+        
+        function reloadMarkers(){
+            deleteOverlays(markersOld);
+            deleteOverlays(markers);
+            loadObjectData();
+        }
+        
+        function deleteOverlays(mkr) {
+          for (var i = 0; i < mkr.length; i++) {
+              mkr[i].setMap(null);
+          }
+          mkr = [];
+        }
+         
+        
+    </script>
+    <style>
+        #map{            
+            height:600px;
+        }
+    </style>
+    <apex:form styleClass="bootstraped">
+        <div  class="well">
+            <div id="map"/>
+        </div>
+        
+        
+       
+        <div class="modal fade" id="createNewModal">
+            <apex:outputPanel id="createNewModalPanel">
+                <div class="modal-dialog">
+                    <div class="modal-content ">
+                        <div class="modal-header " style="border-radius: 6px 6px 0 0; " id="createNewModalHeader">
+                            <button type="button" class="close" data-dismiss="modal" aria-hidden="true" onclick="deleteOverlays(markers);">&times;</button>
+                            <h4 class="modal-title" >Enter Details</h4>
+                        </div>
+                        <div class="modal-body">
+                            <apex:pageMessages ></apex:pageMessages>
+                            <apex:pageBlock mode="maindetail">
+                                <apex:pageBlockSection >
+                                    <apex:repeat value="{!NewFields}" var="f">
+                                        <apex:inputField value="{!sobj[f]}" styleClass="new-{!f} bf9MapInputs"/>
+                                    </apex:repeat>
+                                </apex:pageBlockSection>
+                                <div class="panel panel-primary">
+                                    <span class="label label-primary">Fields from Map</span>
+                                    <div class="panel-body">
+                                        <apex:inputText styleClass="new-Id bf9MapInputs" value="{!sobj['Id']}" style="display:none"/>
+                                        <apex:pageBlockSection >
+                                            
+                                            <apex:pageBlockSectionItem >
+                                                <apex:outputLabel >Latitude</apex:outputLabel>
+                                                <apex:inputText id="lat" styleClass="bf9MapInputs" value="{!Latitude}"/>
+                                            </apex:pageBlockSectionItem>
+                                            <apex:pageBlockSectionItem >
+                                                <apex:outputLabel >Longitude</apex:outputLabel>
+                                                <apex:inputText id="lang" styleClass="bf9MapInputs" value="{!Longitude}"/>
+                                            </apex:pageBlockSectionItem>
+                                            <apex:pageBlockSectionItem >
+                                                 <apex:outputLabel >Formatted Address</apex:outputLabel>
+                                                 <apex:outputPanel >
+                                                     
+                                                     <apex:inputTextarea id="formattedAddress" styleClass="bf9MapInputs" value="{!Address}"/>
+                                                     <small><span id="formattedAddressError" class="help-block" style="color:red"></span></small>
+                                                 </apex:outputPanel>
+                                            </apex:pageBlockSectionItem>
+                                        </apex:pageBlockSection>
+                                    </div>
+                                </div>
+                            </apex:pageBlock>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-primary" data-dismiss="modal" aria-hidden="true" onclick="deleteOverlays(markers);">Cancel</button>
+                            <apex:commandButton value="Save" rendered="{!config.isUpdate_Allowed__c || config.isCreate_Allowed__c}" styleClass="btn btn-success saveBtn" action="{!save}" reRender="createNewModalPanel" onclick="$j(this).attr('data-loading-text','Saving...').button('loading')"/>
+                            <script>
+                                 if({!isSuccess}){ 
+                                     $j('#createNewModal').modal('hide');
+                                     reloadMarkers();
+                                     showNotification('alert-success','Success','<h5>Record was successfully saved.</h5>');
+                                 }
+                                
+                            </script>
+                        </div>
+                    </div><!-- /.modal-content -->
+                </div><!-- /.modal-dialog -->
+            </apex:outputPanel>
+        </div><!-- /.modal -->
+        
+        <!-- Modal -->
+        <div class="modal fade" id="notification">
+            <div class="modal-dialog">
+                <div class="modal-content ">
+                    <div class="modal-header " style="border-radius: 6px 6px 0 0; " id="notificationHeader">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                        <h4 class="modal-title" ></h4>
+                    </div>
+                    <div class="modal-body">
+                    
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="notificationHolder"/>
+    </apex:form>
+    <script>if({!isConfigurationError}) showNotification('alert-danger','Error','<h5>{!errorMessage}</h5>');</script>
+</apex:component>
