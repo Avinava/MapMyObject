@@ -3,7 +3,7 @@ MapMyObject
 
 A visualforce mapping component
 
-A all in one mapping visualforce component that can map/visualize records from any Object.
+All in one mapping visualforce component that can map/visualize records from any Object.
 -
 
 * Visualize data from any Sobject into a Google Map
